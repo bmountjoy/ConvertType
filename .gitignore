@@ -1,0 +1,4 @@
+*.egg
+dist/*
+build/*
+py2app-0.9-py2.7.egg/*
