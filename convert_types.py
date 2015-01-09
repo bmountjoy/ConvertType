@@ -1,10 +1,13 @@
 
-
+import sys
 import os
 import ntpath
 import Tkinter
 import tkFileDialog
 import struct
+import traceback
+import tkMessageBox
+
 
 class Init:
 	
@@ -115,17 +118,29 @@ class Init:
 		
 		return 0, ""
 		
+	def out_type_is_integral(self, dtype):
+		if dtype == "1" or dtype == "2" or dtype == "3" or dtype == "12" or dtype == "13" or dtype == "14" or dtype == "15":
+			return True
+		else:
+			return False
+			
 	def outer(self):
-		indir  = self.input_entry.get()
-		outdir = self.output_entry.get()
 		
-		if indir == outdir:
-			self.show_alert("Error: input and output directories must be different.")
-			return
-		
-		for f in os.listdir(indir):
-			if not(f.endswith(".hdr")) and not(os.path.isdir(os.path.join(indir, f))):
-				self.go(os.path.join(indir, f), outdir)
+		try:
+			indir  = self.input_entry.get()
+			outdir = self.output_entry.get()
+			
+			if indir == outdir:
+				tkMessageBox.showerror("Error", "input and output directories must be different.")
+				return
+			
+			for f in os.listdir(indir):
+				if not(f.endswith(".hdr")) and not(os.path.isdir(os.path.join(indir, f))):
+					self.go(os.path.join(indir, f), outdir)
+		except:
+			exc_type, exc_value, exc_trace = sys.exc_info()
+			lines = traceback.format_exception(exc_type, exc_value, exc_trace)
+			tkMessageBox.showerror("Error", "".join(line for line in lines))
 			
 		
 	def go(self, in_dat_path, out_dir):
@@ -140,15 +155,15 @@ class Init:
 			in_hdr_path = base + ".hdr"
 		
 		if not(os.path.exists(in_hdr_path)):
-			self.show_alert("Error: " + in_hdr_path + " does not exist.")
+			tkMessageBox.showerror("Error", in_hdr_path + " does not exist.")
 			return
 			
 		if not(os.path.exists(in_dat_path)):
-			self.show_alert("Error: " + in_hdr_path + " does not exist.")
+			tkMessageBox.showerror("Error", in_dat_path + " does not exist.")
 			return
 		
 		if not(os.path.exists(out_dir)):
-			self.show_alert("Error: " + out_dir + " does not exist.")
+			tkMessageBox.showerror("Error", out_dir + " does not exist.")
 			return
 			
 		out_dat_path = os.path.join(out_dir, ntpath.basename(in_dat_path))
@@ -187,7 +202,7 @@ class Init:
 		print("in code: " + in_code)
 		
 		if in_mult == 0:
-			self.show_alert("Error: unsupported data type: " + in_type)
+			tkMessageBox.showerror("Error", "unsupported data type: " + in_type)
 			return
 			
 		out_mult, out_code = self.get_mult_and_code(out_type)
@@ -196,7 +211,7 @@ class Init:
 		print("out code: " + out_code)
 		
 		if out_mult == 0:
-			self.show_alert("Error: unsupported data type: " + out_type)
+			tkMessageBox.showerror("Error", "unsupported data type: " + out_type)
 			return
 		
 		chunk = 2**23
@@ -207,6 +222,8 @@ class Init:
 				if s == "":
 					break
 				t = struct.unpack(in_code * (len(s) / in_mult), s)
+				#if self.out_type_is_integral(out_type):
+				#	t = tuple(int(x) for x in t)
 				s = struct.pack(out_code * len(t), *t)
 				fout.write(s)
 		
